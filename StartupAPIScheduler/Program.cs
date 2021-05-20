@@ -14,12 +14,18 @@ namespace StartupAPIScheduler
         /// </summary>
         static void Main()
         {
+#if (!DEBUG)
             ServiceBase[] ServicesToRun;
             ServicesToRun = new ServiceBase[]
             {
                 new APIScheduler()
             };
             ServiceBase.Run(ServicesToRun);
+#else
+            APIScheduler mainService = new APIScheduler();
+            mainService.OnDebug();
+            System.Threading.Thread.Sleep(System.Threading.Timeout.Infinite);
+#endif
         }
     }
 }
