@@ -130,6 +130,9 @@ namespace StartupAPIScheduler
                 var secondsPassed = Math.Round(endTime.Subtract(startTime).TotalSeconds);
                 var ts = TimeSpan.FromSeconds(secondsPassed).ToString();
 
+
+
+
                 LogManager.Write(true, $"Proccess finished in {{{ts}}}");
 
                 appTimer.Start();
