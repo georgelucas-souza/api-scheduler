@@ -90,7 +90,7 @@ namespace StartupAPIScheduler
         }
 
 
-        private void ExecuteMainJob()
+        private async Task ExecuteMainJob()
         {
             var apiListResponse = networkManager.Request(config.ApiListEndPoint, config.ApiListResource, RestSharp.Method.GET, config.DefaultConnectionTimeout, null, null).CheckResponse();
             LogManager.Write(true, "Retreiving API List...");
@@ -107,9 +107,9 @@ namespace StartupAPIScheduler
                 {
                     LogManager.Write(true, $"{apiScheduleList.Count.ToString("00")} API's found.");
 
-                    var tasks = apiScheduleList.Select(s => Task.Factory.StartNew(async () => await FireModule(s)).Unwrap()).ToList().ToArray();
+                    var tasks = apiScheduleList.Select(s => FireModule(s)).ToArray();
 
-                    Task.WaitAll(tasks);
+                    await Task.WhenAll(tasks);
 
                 }
             }
@@ -131,7 +131,7 @@ namespace StartupAPIScheduler
 
             try
             {
-                ExecuteMainJob();
+                ExecuteMainJob().Wait();
             }
             catch (Exception ex) { LogManager.Write(false, ex.Message); }
             finally
