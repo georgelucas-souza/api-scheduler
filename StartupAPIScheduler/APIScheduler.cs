@@ -60,31 +60,37 @@ namespace StartupAPIScheduler
 
         private async Task FireModule(APIListItem item)
         {
-            await Task.Run(() =>
+
+            LogManager.Write(true, $"Fire Module [{item.ApiName}]...");
+
+            var nextRun = item.LastRun.AddMilliseconds(item.TimeInterval);
+
+            if (nextRun <= DateTime.Now)
             {
-                LogManager.Write(true, $"Fire Module [{item.ApiName}]...");
+                var itemResponse = await networkManager.RequestAsync(item.EndPoint, item.Resource, item.Method, item.TimeOut, item.Paramters, item.ApiName);
 
-                var nextRun = item.LastRun.AddMilliseconds(item.TimeInterval);
+                var checkResponse = itemResponse.CheckResponse();
 
-                if (nextRun <= DateTime.Now)
+                if (checkResponse.IsValid)
                 {
-                    var itemResponse = networkManager.Request(item.EndPoint, item.Resource, item.Method, item.TimeOut, item.Paramters, item.ApiName).CheckResponse();
-                    if (itemResponse.IsValid)
+                    Dictionary<string, object> dict = new Dictionary<string, object>();
+                    dict.Add("ApiName", item.ApiName);
+                    dict.Add("LastRun", nextRun);
+                    var apiUpdateResponse = networkManager.Request(config.ApiListEndPoint, config.ApiUpdateResource, RestSharp.Method.POST, config.DefaultConnectionTimeout, dict, null).CheckResponse();
+                    if (apiUpdateResponse.IsValid)
                     {
-                        Dictionary<string, object> dict = new Dictionary<string, object>();
-                        dict.Add("ApiName", item.ApiName);
-                        dict.Add("LastRun", nextRun);
-                        var apiUpdateResponse = networkManager.Request(config.ApiListEndPoint, config.ApiUpdateResource, RestSharp.Method.POST, config.DefaultConnectionTimeout, dict, null).CheckResponse();
-                        if (apiUpdateResponse.IsValid)
-                        {
-                            LogManager.Write(true, $"Module [{item.ApiName}] success.");
-                        }
+                        LogManager.Write(true, $"Module [{item.ApiName}] SUCCESS.");
                     }
                 }
-            });
+                else
+                {
+                    LogManager.Write(true, $"Module [{item.ApiName}] ERROR.");
+                }
+            }
         }
 
-        private async Task ExecuteMainJob()
+
+        private void ExecuteMainJob()
         {
             var apiListResponse = networkManager.Request(config.ApiListEndPoint, config.ApiListResource, RestSharp.Method.GET, config.DefaultConnectionTimeout, null, null).CheckResponse();
             LogManager.Write(true, "Retreiving API List...");
@@ -101,12 +107,10 @@ namespace StartupAPIScheduler
                 {
                     LogManager.Write(true, $"{apiScheduleList.Count.ToString("00")} API's found.");
 
-                    foreach (var item in apiScheduleList)
-                    {
-                        taskList.Add(FireModule(item));
-                    }
+                    var tasks = apiScheduleList.Select(s => Task.Factory.StartNew(async () => await FireModule(s)).Unwrap()).ToList().ToArray();
 
-                    await Task.WhenAll(taskList.ToArray());
+                    Task.WaitAll(tasks);
+
                 }
             }
         }
@@ -116,13 +120,20 @@ namespace StartupAPIScheduler
             appTimer.Stop();
             appTimer.Enabled = false;
 
+            if (!config.Initialize())
+            {
+                Environment.Exit(1);
+            }
+
+            appTimer.Interval = config.TimerInterval;
+
             DateTime startTime = DateTime.Now;
 
             try
             {
-                ExecuteMainJob().GetAwaiter().GetResult();
+                ExecuteMainJob();
             }
-            catch(Exception ex) { LogManager.Write(false, ex.Message); }
+            catch (Exception ex) { LogManager.Write(false, ex.Message); }
             finally
             {
                 DateTime endTime = DateTime.Now;
@@ -137,7 +148,7 @@ namespace StartupAPIScheduler
                 appTimer.Enabled = true;
             }
 
-            
+
         }
     }
 }

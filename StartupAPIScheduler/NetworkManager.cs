@@ -10,8 +10,8 @@ namespace StartupAPIScheduler
 {
     public class NetworkManager : INetworkManager
     {
-                
-        public IRestResponse Request(string endpoint, string resource, Method method, int timeOut, Dictionary<string, object> parameters = null, string apiName = null)
+         
+        public async Task<IRestResponse> RequestAsync(string endpoint, string resource, Method method, int timeOut, Dictionary<string, object> parameters = null, string apiName = null)
         {
             IRestResponse response;
 
@@ -23,7 +23,7 @@ namespace StartupAPIScheduler
 
                 if ((parameters != null) && parameters.Count > 0)
                 {
-                    if(method == Method.POST)
+                    if (method == Method.POST)
                     {
                         var jsonBody = parameters.ToJsonObject();
 
@@ -31,9 +31,55 @@ namespace StartupAPIScheduler
 
                         request.RequestFormat = DataFormat.Json;
                     }
-                    else if(method == Method.GET)
+                    else if (method == Method.GET)
                     {
-                        foreach(var parameter in parameters)
+                        foreach (var parameter in parameters)
+                        {
+                            request.AddParameter(parameter.Key, parameter.Value);
+                        }
+                    }
+                }
+
+                request.Timeout = timeOut;
+
+                response = await client.ExecuteTaskAsync(request);
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                LogManager.Write(false, ex.Message, apiName);
+
+                return null;
+            }
+
+
+
+        }
+
+        IRestResponse INetworkManager.Request(string endpoint, string resource, Method method, int timeOut, Dictionary<string, object> parameters, string apiName)
+        {
+            IRestResponse response;
+
+            try
+            {
+                RestClient client = new RestClient(endpoint);
+
+                var request = new RestRequest(resource, method);
+
+                if ((parameters != null) && parameters.Count > 0)
+                {
+                    if (method == Method.POST)
+                    {
+                        var jsonBody = parameters.ToJsonObject();
+
+                        request.AddJsonBody(jsonBody);
+
+                        request.RequestFormat = DataFormat.Json;
+                    }
+                    else if (method == Method.GET)
+                    {
+                        foreach (var parameter in parameters)
                         {
                             request.AddParameter(parameter.Key, parameter.Value);
                         }
@@ -46,16 +92,12 @@ namespace StartupAPIScheduler
 
                 return response;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 LogManager.Write(false, ex.Message, apiName);
 
                 return null;
             }
-            
-
-            
         }
-
     }
 }

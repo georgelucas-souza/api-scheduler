@@ -10,5 +10,6 @@ namespace StartupAPIScheduler
     public interface INetworkManager
     {
         IRestResponse Request(string endpoint, string resource, Method method, int timeOut, Dictionary<string, object> parameters = null, string apiName = null);
+        Task<IRestResponse> RequestAsync(string endpoint, string resource, Method method, int timeOut, Dictionary<string, object> parameters = null, string apiName = null);
     }
 }

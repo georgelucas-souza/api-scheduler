@@ -9,9 +9,9 @@ namespace StartupAPIScheduler
 {
     public static class AppConfig
     {
-        public static string AppModuleFolderPath { get; } = Path.Combine(Environment.CurrentDirectory, "Modules");
-        public static string AppLogFolderPath { get; } = Path.Combine(Environment.CurrentDirectory, "Logs");
-        public static string ConfigFilePath { get; } = Path.Combine(Environment.CurrentDirectory, "config.json");
+        public static string AppModuleFolderPath { get; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Modules");
+        public static string AppLogFolderPath { get; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+        public static string ConfigFilePath { get; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
 
         public static string GetModuleFolderPath(string apiName)
         {
