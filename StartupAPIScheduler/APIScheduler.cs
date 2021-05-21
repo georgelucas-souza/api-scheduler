@@ -103,7 +103,7 @@ namespace StartupAPIScheduler
 
                 var apiScheduleList = APIListItem.FromJson(apiListResponse.Content);
 
-                if (apiScheduleList != null)
+                if ((apiScheduleList != null) && apiScheduleList.Count > 0)
                 {
                     LogManager.Write(true, $"{apiScheduleList.Count.ToString("00")} API's found.");
 
