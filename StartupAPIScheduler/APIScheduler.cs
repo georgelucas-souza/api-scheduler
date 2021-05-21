@@ -110,7 +110,10 @@ namespace StartupAPIScheduler
                     var tasks = apiScheduleList.Select(s => FireModule(s)).ToArray();
 
                     await Task.WhenAll(tasks);
-
+                }
+                else
+                {
+                    LogManager.Write(false, $"No API's found.");
                 }
             }
         }
