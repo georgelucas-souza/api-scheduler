@@ -52,7 +52,7 @@ namespace StartupAPIScheduler
             }
         }
 
-        public static object ToJsonObject(this Dictionary<string, object> dict)
+        public static string ToJsonObject(this Dictionary<string, object> dict)
         {
             var expandoObj = new ExpandoObject();
             var expandoObjCollection = (ICollection<KeyValuePair<string, object>>)expandoObj;
